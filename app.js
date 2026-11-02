@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 
-import authRoutes from "./";
+import authRoutes from "./server/routes/transaction.route.js";
 import transactionRoutes from "./server/routes/transaction.route.js";
 import expenseAiRoutes from "./server/routes/expenseAi.route.js";
 
@@ -24,6 +24,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/transactions", transactionRoutes);
+app.use("/api/expense",expenseAiRoutes)
 
 app.use((req, res) => {
   res.status(404).json({
