@@ -1,38 +1,33 @@
-
-import express from "express";
-import mongoose from "mongoose";
 import dotenv from "dotenv";
-import cors from "cors";
+import mongoose from "mongoose";
+import path from "path";
+import { fileURLToPath } from "url";
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const app = express();
-
-app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:5173",
-  credentials: true,
-}));
-
-app.use(express.json());
-
-app.get("/", (req, res) => {
-  res.send("Personal Expense Tracker API is running!");
+// Load root .env BEFORE importing app.js
+dotenv.config({
+  path: path.join(__dirname, ".env"),
+  override: true
 });
+
+console.log("GROQ KEY LOADED:", Boolean(process.env.GROQ_API_KEY));
+console.log("NODE_ENV:", process.env.NODE_ENV);
+
+const { default: app } = await import("./app.js");
 
 const PORT = process.env.PORT || 8080;
 
-const startServer = async () => {
-  try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log("MongoDB connected successfully!");
+try {
+  await mongoose.connect(process.env.MONGODB_URI);
 
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  } catch (error) {
-    console.error("Server startup failed:", error.message);
-    process.exit(1);
-  }
-};
+  console.log("MongoDB connected successfully!");
 
-startServer();
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+} catch (error) {
+  console.error("Server startup failed:", error.message);
+  process.exit(1);
+}

@@ -1,4 +1,4 @@
-import { extractExpense } from "../services/expenseAi.service.js";
+import { generateExpensePreview } from "../services/expenseAi.service.js";
 
 export const previewAITransaction = async (req, res) => {
   try {
@@ -14,7 +14,7 @@ export const previewAITransaction = async (req, res) => {
       });
     }
 
-    const extractedExpense = await extractExpense(message.trim());
+    const extractedExpense = await generateExpensePreview(message.trim());
 
    
     const { date } = extractedExpense;

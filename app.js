@@ -1,7 +1,8 @@
+
 import express from "express";
 import cors from "cors";
 
-import authRoutes from "./server/routes/transaction.route.js";
+import authRoutes from "./server/routes/user.auth.route.js";
 import transactionRoutes from "./server/routes/transaction.route.js";
 import expenseAiRoutes from "./server/routes/expenseAi.route.js";
 
@@ -18,17 +19,17 @@ app.use(express.json({ limit: "20kb" }));
 
 app.get("/", (req, res) => {
   res.status(200).json({
-    message: "Personal Finance Tracker API is running",
+    message: "Personal Finance Tracker API is running"
   });
 });
 
 app.use("/api/auth", authRoutes);
 app.use("/api/transactions", transactionRoutes);
-app.use("/api/expense",expenseAiRoutes)
+app.use("/api/expenses/ai", expenseAiRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
-    message: "Route not found",
+    message: "Route not found"
   });
 });
 

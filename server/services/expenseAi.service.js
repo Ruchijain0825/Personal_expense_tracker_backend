@@ -4,10 +4,9 @@ import { RunnablePassthrough } from "@langchain/core/runnables";
 import { z } from "zod";
 
 const llm = new ChatGroq({
-  model: "llama-3.1-8b-instant",
+  model: "openai/gpt-oss-20b",
   temperature: 0,
 });
-
 const expenseSchema = z.object({
   type: z.enum(["income", "expense"]),
   amount: z.number().positive().max(1_000_000_000),
@@ -43,7 +42,7 @@ const extractionChain = RunnablePassthrough.assign({
   extractedExpense: expensePrompt.pipe(structuredLLM),
 });
 
-export async function extractExpense(message) {
+export async function generateExpensePreview(message) {
   const today = new Date().toISOString().slice(0, 10);
 
   const result = await extractionChain.invoke({

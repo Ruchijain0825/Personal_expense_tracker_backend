@@ -72,12 +72,13 @@ export const createTransaction = async (req, res) => {
       transaction,
     });
   } catch (error) {
-    console.error("Create transaction error:", error.message);
+  console.error("CREATE TRANSACTION ERROR:", error);
 
-    return res.status(500).json({
-      message: "Internal server error",
-    });
-  }
+  return res.status(500).json({
+    message: "Internal server error",
+    error: error.message
+  });
+}
 };
 
 export const getTransactions = async (req, res) => {
