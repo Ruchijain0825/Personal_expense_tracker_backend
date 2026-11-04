@@ -1,19 +1,23 @@
+
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
+// CREATE JWT TOKEN
 const createToken = (userId) => {
   return jwt.sign(
-    { userId },
+    { userId: userId.toString() },
     process.env.JWT_SECRET,
     { expiresIn: "1d" }
   );
 };
 
+// REGISTER USER
 export const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
+    // Validate required fields
     if (
       typeof name !== "string" ||
       typeof email !== "string" ||
@@ -27,24 +31,33 @@ export const registerUser = async (req, res) => {
     const normalizedName = name.trim();
     const normalizedEmail = email.trim().toLowerCase();
 
-    if (normalizedName.length < 2 || normalizedName.length > 60) {
+    // Validate name
+    if (
+      normalizedName.length < 2 ||
+      normalizedName.length > 60
+    ) {
       return res.status(400).json({
         message: "Name must be between 2 and 60 characters",
       });
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    // Validate email
+    if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
+    ) {
       return res.status(400).json({
         message: "Please enter a valid email",
       });
     }
 
+    // Validate password
     if (password.length < 8 || password.length > 72) {
       return res.status(400).json({
         message: "Password must be 8–72 characters long",
       });
     }
 
+    // Check existing user
     const existingUser = await User.findOne({
       email: normalizedEmail,
     });
@@ -55,15 +68,21 @@ export const registerUser = async (req, res) => {
       });
     }
 
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
+    // Create new user
     const user = await User.create({
       name: normalizedName,
       email: normalizedEmail,
       password: hashedPassword,
     });
 
-    const token = createToken(user._id.toString());
+    // Generate token for new user
+    const token = createToken(user._id);
+
+    console.log("NEW USER REGISTERED:", user.email);
+    console.log("NEW USER ID:", user._id.toString());
 
     return res.status(201).json({
       message: "Registration successful",
@@ -74,14 +93,15 @@ export const registerUser = async (req, res) => {
         email: user.email,
       },
     });
+
   } catch (error) {
+    console.error("Registration error:", error);
+
     if (error.code === 11000) {
       return res.status(409).json({
         message: "Email is already registered",
       });
     }
-
-    console.error("Registration error:", error.message);
 
     return res.status(500).json({
       message: "Internal server error",
@@ -89,10 +109,13 @@ export const registerUser = async (req, res) => {
   }
 };
 
+
+// LOGIN USER
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Validate input
     if (
       typeof email !== "string" ||
       typeof password !== "string" ||
@@ -104,6 +127,7 @@ export const loginUser = async (req, res) => {
       });
     }
 
+    // Find user
     const user = await User.findOne({
       email: email.trim().toLowerCase(),
     }).select("+password");
@@ -114,6 +138,7 @@ export const loginUser = async (req, res) => {
       });
     }
 
+    // Compare password
     const isPasswordCorrect = await bcrypt.compare(
       password,
       user.password
@@ -125,7 +150,11 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    const token = createToken(user._id.toString());
+    // Generate token for logged-in user
+    const token = createToken(user._id);
+
+    console.log("LOGIN EMAIL:", user.email);
+    console.log("LOGIN USER ID:", user._id.toString());
 
     return res.status(200).json({
       message: "Login successful",
@@ -136,8 +165,9 @@ export const loginUser = async (req, res) => {
         email: user.email,
       },
     });
+
   } catch (error) {
-    console.error("Login error:", error.message);
+    console.error("Login error:", error);
 
     return res.status(500).json({
       message: "Internal server error",

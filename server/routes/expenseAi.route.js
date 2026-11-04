@@ -1,5 +1,5 @@
 import express from "express";
-import devAuthMiddleware from "../middlewares/dev.auth.middleware.js";
+import authMiddleware from "../middlewares/user.suth.middleware.js";
 
 import {
   previewAITransaction,
@@ -7,7 +7,7 @@ import {
 
 const router = express.Router();
 
-router.use(devAuthMiddleware);
+router.use(authMiddleware);
 
 router.post("/preview", previewAITransaction);
 

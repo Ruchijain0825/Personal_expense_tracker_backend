@@ -1,5 +1,5 @@
 import express from "express";
-import devAuthMiddleware from "../middlewares/dev.auth.middleware.js";
+import authMiddleware from "../middlewares/user.suth.middleware.js";
 
 
 import { createTransaction, getTransactions, deleteTransaction , updateTransaction,  getTransactionById,  getTransactionSummary} from "../controllers/transaction.controller.js";
@@ -13,7 +13,7 @@ router.use((req, res, next) => {
   next();
 });
 
- router.use(devAuthMiddleware);
+ router.use(authMiddleware);
 
 router.post("/", createTransaction);
 router.get("/", getTransactions);

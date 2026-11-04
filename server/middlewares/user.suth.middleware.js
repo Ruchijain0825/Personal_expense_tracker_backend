@@ -1,3 +1,4 @@
+
 import jwt from "jsonwebtoken";
 
 const authMiddleware = (req, res, next) => {
@@ -17,10 +18,23 @@ const authMiddleware = (req, res, next) => {
       process.env.JWT_SECRET
     );
 
-    req.user = { userId: decoded.userId };
+    if (!decoded.userId) {
+      return res.status(401).json({
+        message: "Invalid authentication token",
+      });
+    }
+
+    req.user = {
+      userId: decoded.userId,
+    };
+
+    console.log("AUTHENTICATED USER:", req.user.userId);
 
     next();
+
   } catch (error) {
+    console.error("AUTH ERROR:", error.message);
+
     return res.status(401).json({
       message: "Invalid or expired token",
     });

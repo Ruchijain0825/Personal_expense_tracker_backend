@@ -1,16 +1,4 @@
-
-import axios from "axios";
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  withCredentials: true
-});
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+import api from "./api";
 
 export const createTransaction = async (data) => {
   const response = await api.post("/api/transactions", data);
@@ -28,7 +16,10 @@ export const getTransactionSummary = async () => {
 };
 
 export const updateTransaction = async (id, data) => {
-  const response = await api.patch(`/api/transactions/${id}`, data);
+  const response = await api.patch(
+    `/api/transactions/${id}`,
+    data
+  );
   return response.data;
 };
 
@@ -42,11 +33,9 @@ export const getTransactionById = async (id) => {
   return response.data;
 };
 
-// AI Smart Entry Preview
 export const previewAITransaction = async (message) => {
   const response = await api.post("/api/expenses/ai/preview", {
-    message
+    message,
   });
-
   return response.data;
 };

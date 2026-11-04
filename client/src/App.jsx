@@ -1,16 +1,34 @@
-
 import { lazy, Suspense, useEffect, useState } from "react";
-import Sidebar from "./components/Sidebar";
-import toast from "react-hot-toast";
-import { getTransactions } from "./services/TransactionService.js";
+import {
+  Routes,
+  Route,
+  Navigate,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 
+import Sidebar from "./components/Sidebar";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Login from "./Pages/Login";
+import { useAuth } from "./context/AuthContext";
+import { getTransactions } from "./services/TransactionService.js";
+import toast from "react-hot-toast";
+
+// Lazy loaded pages
 const Dashboard = lazy(() => import("./Pages/Dashboard.jsx"));
 const ManualEntry = lazy(() => import("./Pages/ManualEntry.jsx"));
 const Transactions = lazy(() => import("./Pages/Transactions.jsx"));
 const Calendar = lazy(() => import("./Pages/Calendar.jsx"));
-const ExpensePieChart = lazy(() =>import("./Pages/ExpensePieChart.jsx"));
-const MonthlyBarChart = lazy(() =>import("./Pages/MonthlyBarChart.jsx"));
-const AISmartEntry = lazy(() => import("./Pages/AiExpenseEntry.jsx"));
+const ExpensePieChart = lazy(() =>
+  import("./Pages/ExpensePieChart.jsx")
+);
+const MonthlyBarChart = lazy(() =>
+  import("./Pages/MonthlyBarChart.jsx")
+);
+const AISmartEntry = lazy(() =>
+  import("./Pages/AiExpenseEntry.jsx")
+);
 
 function PageLoader() {
   return (
@@ -116,40 +134,45 @@ function Reports() {
   );
 }
 
-export default function App() {
-  const [activePage, setActivePage] = useState("Dashboard");
+// Active page name based on URL
+const pageNames = {
+  "/dashboard": "Dashboard",
+  "/transactions": "Transactions",
+  "/manual-entry": "Manual Entry",
+  "/reports": "Reports",
+  "/ai-entry": "AI Smart Entry",
+  "/calendar": "Calendar",
+  "/settings": "Settings",
+};
 
-  const renderPage = () => {
-    switch (activePage) {
-      case "Dashboard":
-        return <Dashboard />;
+function DashboardLayout() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { logout } = useAuth();
 
-      case "Transactions":
-        return <Transactions />;
+  const activePage = pageNames[location.pathname] || "Dashboard";
 
-      case "Manual Entry":
-        return <ManualEntry />;
+  // Sidebar ke existing setActivePage prop ko preserve karna
+  const setActivePage = (page) => {
+    const paths = {
+      Dashboard: "/dashboard",
+      Transactions: "/transactions",
+      "Manual Entry": "/manual-entry",
+      Reports: "/reports",
+      "AI Smart Entry": "/ai-entry",
+      Calendar: "/calendar",
+      Settings: "/settings",
+    };
 
-      case "Reports":
-        return <Reports />;
-
-      case "AI Smart Entry":
-        return <AISmartEntry/>
-
-         case "Calendar":
-            return <Calendar />;
-
-      case "Settings":
-        return (
-          <PlaceholderPage
-            title="Settings"
-            description="Manage your account and application preferences."
-          />
-        );
-
-      default:
-        return <Dashboard />;
+    if (paths[page]) {
+      navigate(paths[page]);
     }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+    toast.success("Logged out successfully");
   };
 
   return (
@@ -160,10 +183,93 @@ export default function App() {
       />
 
       <main className="min-w-0 flex-1">
+        <div className="flex justify-end border-b border-slate-200 bg-white p-3">
+          <button
+            onClick={handleLogout}
+            className="rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600"
+          >
+            Logout
+          </button>
+        </div>
+
         <Suspense fallback={<PageLoader />}>
-          {renderPage()}
+          <Outlet />
         </Suspense>
       </main>
     </div>
+  );
+}
+
+// Already logged-in user should not see Login page
+function LoginRoute() {
+  const { isAuthenticated } = useAuth();
+
+  return isAuthenticated
+    ? <Navigate to="/dashboard" replace />
+    : <Login />;
+}
+
+export default function App() {
+  return (
+    <Routes>
+      {/* Public route */}
+      <Route path="/login" element={<LoginRoute />} />
+
+      {/* All routes below are protected */}
+      <Route element={<ProtectedRoute />}>
+        <Route element={<DashboardLayout />}>
+        <Route
+           path="/dashboard"
+            element={<Dashboard />}
+/>
+          <Route
+            path="/transactions"
+            element={<Transactions />}
+          />
+
+          <Route
+            path="/manual-entry"
+            element={<ManualEntry />}
+          />
+
+          <Route
+            path="/reports"
+            element={<Reports />}
+          />
+
+          <Route
+            path="/ai-entry"
+            element={<AISmartEntry />}
+          />
+
+          <Route
+            path="/calendar"
+            element={<Calendar />}
+          />
+
+          <Route
+            path="/settings"
+            element={
+              <PlaceholderPage
+                title="Settings"
+                description="Manage your account and application preferences."
+              />
+            }
+          />
+        </Route>
+      </Route>
+
+      {/* Default route */}
+      <Route
+        path="/"
+        element={<Navigate to="/dashboard" replace />}
+      />
+
+      {/* Invalid route */}
+      <Route
+        path="*"
+        element={<Navigate to="/dashboard" replace />}
+      />
+    </Routes>
   );
 }

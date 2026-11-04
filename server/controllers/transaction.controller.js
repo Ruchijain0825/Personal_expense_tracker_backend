@@ -1,6 +1,8 @@
+
 import mongoose from "mongoose";
 import Transaction from "../models/transaction.model.js";
 
+// CREATE TRANSACTION
 export const createTransaction = async (req, res) => {
   try {
     const { type, amount, category, description, date } = req.body;
@@ -71,18 +73,26 @@ export const createTransaction = async (req, res) => {
       message: "Transaction created successfully",
       transaction,
     });
-  } catch (error) {
-  console.error("CREATE TRANSACTION ERROR:", error);
 
-  return res.status(500).json({
-    message: "Internal server error",
-    error: error.message
-  });
-}
+  } catch (error) {
+    console.error("CREATE TRANSACTION ERROR:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
 };
 
+
+// GET ALL TRANSACTIONS WITH DEBUGGING
 export const getTransactions = async (req, res) => {
   try {
+    console.log("================================");
+    console.log("GET TRANSACTIONS API CALLED");
+
+    console.log("USER ID FROM JWT:", req.user?.userId);
+
     const page = Number(req.query.page ?? 1);
     const limit = Number(req.query.limit ?? 10);
 
@@ -98,7 +108,10 @@ export const getTransactions = async (req, res) => {
       });
     }
 
-    const filter = { userId: req.user.userId };
+    // Logged-in user's transactions only
+    const filter = {
+      userId: new mongoose.Types.ObjectId(req.user.userId),
+    };
 
     if (req.query.type !== undefined) {
       if (!["income", "expense"].includes(req.query.type)) {
@@ -110,6 +123,8 @@ export const getTransactions = async (req, res) => {
       filter.type = req.query.type;
     }
 
+    console.log("MONGODB FILTER:", filter);
+
     const [transactions, total] = await Promise.all([
       Transaction.find(filter)
         .sort({ date: -1, _id: -1 })
@@ -120,6 +135,17 @@ export const getTransactions = async (req, res) => {
       Transaction.countDocuments(filter),
     ]);
 
+    console.log("TRANSACTIONS FOUND:", total);
+
+    console.log(
+      "TRANSACTION USER IDS:",
+      [...new Set(
+        transactions.map((item) => item.userId?.toString())
+      )]
+    );
+
+    console.log("================================");
+
     return res.status(200).json({
       transactions,
       pagination: {
@@ -129,8 +155,9 @@ export const getTransactions = async (req, res) => {
         totalPages: Math.ceil(total / limit),
       },
     });
+
   } catch (error) {
-    console.error("Get transactions error:", error.message);
+    console.error("GET TRANSACTIONS ERROR:", error);
 
     return res.status(500).json({
       message: "Internal server error",
@@ -138,6 +165,8 @@ export const getTransactions = async (req, res) => {
   }
 };
 
+
+// DELETE TRANSACTION
 export const deleteTransaction = async (req, res) => {
   try {
     const { id } = req.params;
@@ -162,14 +191,18 @@ export const deleteTransaction = async (req, res) => {
     return res.status(200).json({
       message: "Transaction deleted successfully",
     });
+
   } catch (error) {
-    console.error("Delete transaction error:", error.message);
+    console.error("DELETE TRANSACTION ERROR:", error);
 
     return res.status(500).json({
       message: "Internal server error",
     });
   }
 };
+
+
+// UPDATE TRANSACTION
 export const updateTransaction = async (req, res) => {
   try {
     const { id } = req.params;
@@ -278,14 +311,18 @@ export const updateTransaction = async (req, res) => {
       message: "Transaction updated successfully",
       transaction,
     });
+
   } catch (error) {
-    console.error("Update transaction error:", error.message);
+    console.error("UPDATE TRANSACTION ERROR:", error);
 
     return res.status(500).json({
       message: "Internal server error",
     });
   }
 };
+
+
+// TRANSACTION SUMMARY
 export const getTransactionSummary = async (req, res) => {
   try {
     const summary = await Transaction.aggregate([
@@ -325,26 +362,28 @@ export const getTransactionSummary = async (req, res) => {
     result.balance = result.totalIncome - result.totalExpense;
 
     return res.status(200).json(result);
+
   } catch (error) {
-    console.error("Summary error:", error.message);
+    console.error("SUMMARY ERROR:", error);
 
     return res.status(500).json({
       message: "Internal server error",
     });
   }
 };
+
+
+// GET TRANSACTION BY ID
 export const getTransactionById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Validate transaction ID
     if (!mongoose.isValidObjectId(id)) {
       return res.status(400).json({
         message: "Invalid transaction ID",
       });
     }
 
-    // Find transaction belonging to the logged-in user
     const transaction = await Transaction.findOne({
       _id: id,
       userId: req.user.userId,
@@ -360,8 +399,9 @@ export const getTransactionById = async (req, res) => {
       message: "Transaction fetched successfully",
       transaction,
     });
+
   } catch (error) {
-    console.error("Get transaction error:", error.message);
+    console.error("GET TRANSACTION BY ID ERROR:", error);
 
     return res.status(500).json({
       message: "Internal server error",
