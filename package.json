@@ -4,9 +4,9 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-  "start": "node ./server/server.js",
-  "dev": "nodemon --exec \"node ./server/server.js\""
-},
+    "start": "node server/server.js",
+    "dev": "nodemon server/server.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
